@@ -1,5 +1,6 @@
 package com.sludge.rabbitmqsample.test;
 
+import lombok.SneakyThrows;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.concurrent.CountDownLatch;
@@ -15,8 +16,7 @@ public class Test {
     static void doingQuery() {
         RestTemplate restTemplate = new RestTemplate();
         for (int i = 0; i < 2000; i++) {
-            Task task = new Task(restTemplate, i);
-            new Thread(task).start();
+            new Thread(new Task(restTemplate, i)).start();
             countDownLatch.countDown();
         }
     }
@@ -32,15 +32,14 @@ public class Test {
             this.num = num;
         }
 
+        @SneakyThrows
         @Override
         public void run() {
-            try {
-                countDownLatch.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-//            Object forObject = this.restTemplate.getForObject("http://localhost:8080/customer/page", Object.class);
-            Object forObject = this.restTemplate.getForObject("http://localhost:8080/customer/sendMsg2Que?customerId=" + this.num, Object.class);
+            countDownLatch.await();
+            //直接调用
+            Object forObject = this.restTemplate.getForObject("http://localhost:8080/customer/page", Object.class);
+            //走队列
+//            Object forObject = this.restTemplate.getForObject("http://localhost:8080/customer/sendMsg2Que?customerId=" + this.num, Object.class);
             System.out.println(this.num + "获取到了" + forObject);
         }
     }
